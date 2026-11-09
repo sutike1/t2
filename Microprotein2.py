@@ -206,7 +206,7 @@ Instalare:
     python -m pip install numpy scipy matplotlib streamlit
 
 Rulare:
-    streamlit run microprotein_integrat.py
+    streamlit run microprotein2.py
 """
 
 import csv
