@@ -101,16 +101,19 @@ st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii i
 # BAL OLDALI SÁV (SLIDEREK)
 st.sidebar.header("Parametrii de Simulare")
 if st.sidebar.button("🔄 Resetare Parametri"):
-    for key in ["T", "kLa", "S0", "mu_max", "protein_frac"]:
-        if key in st.session_state:
-            del st.session_state[key]
+    st.session_state["T"] = DEFAULTS["T_opt"]
+    st.session_state["kLa"] = DEFAULTS["kLa"]
+    st.session_state["S0"] = DEFAULTS["S0"]
+    st.session_state["mu_max"] = DEFAULTS["mu_max"]
+    st.session_state["protein_frac"] = DEFAULTS["protein_frac"]
     st.rerun()
+
 p = DEFAULTS.copy()
-p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, 30.0, key="T")
-p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, 15.0, key="kLa")
-p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, 25.0, key="S0")
-p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, 0.20, key="mu_max")
-p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, 0.45, key="protein_frac")
+p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T", value=DEFAULTS["T_opt"])
+p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, key="kLa", value=DEFAULTS["kLa"])
+p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0", value=DEFAULTS["S0"])
+p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max", value=DEFAULTS["mu_max"])
+p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac", value=DEFAULTS["protein_frac"])
 
 # SZIMULÁCIÓ LEFUTTATÁSA
 t, X, S, DO, P = simulate(p)
