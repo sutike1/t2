@@ -11,24 +11,24 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from scipy.integrate import solve_ivp
 
-# Streamlit oldal beállításai
+# Streamlit oldal beállításai (Széles elrendezés)
 st.set_page_config(page_title="Simularea Producției de Micoproteină", layout="wide")
 
-# Matplotlib saját mathtext engine-jét használjuk
+# Matplotlib mathtext engine
 plt.rcParams['text.usetex'] = False  
 
 # ----------------------- PARAMETRI DIDACTICI -----------------------
 DEFAULTS = {
-    "mu_max": 0.20,       # 1/h, demonstrativ
-    "T_opt": 30.0,        # °C, demonstrativ
-    "T_sigma": 6.0,       # °C, lățimea curbei termice
+    "mu_max": 0.20,       # 1/h
+    "T_opt": 30.0,        # °C
+    "T_sigma": 6.0,       # °C
     "Ks": 0.8,            # g/L
     "Ko": 0.5,            # mg O2/L
     "Csat": 8.0,          # mg O2/L
     "kLa": 15.0,          # 1/h
-    "Yxs": 0.48,          # g biomasă / g substrat
-    "qO2": 0.08,          # g O2 / (g biomasă * h)
-    "protein_frac": 0.45, # g proteină / g biomasă uscată
+    "Yxs": 0.48,          # g/g
+    "qO2": 0.08,          # g O2 / (g * h)
+    "protein_frac": 0.45, # g/g
     "X0": 0.20,           # g/L
     "S0": 25.0,           # g/L
     "DO0": 8.0,           # mg/L
@@ -42,7 +42,6 @@ def rhs(t, y, p):
     """y = [X, S, DO]; Monod dublu limitat prin substrat și oxigen."""
     X, S, DO = np.maximum(y, 0.0)
 
-    # Corecție termică gaussiană
     gamma_T = np.exp(-((p["T"] - p["T_opt"]) / p["T_sigma"]) ** 2)
 
     fS = S / (p["Ks"] + S) if S > 0 else 0.0
@@ -52,7 +51,6 @@ def rhs(t, y, p):
     dX = mu * X
     dS = -dX / p["Yxs"]
 
-    # Transfer O2 (mg/L/h) minus consum specific (mg/L/h)
     oxygen_transfer = p["kLa"] * (p["Csat"] - DO)
     oxygen_uptake = p["qO2"] * X * 1000.0
     dDO = oxygen_transfer - oxygen_uptake
@@ -95,23 +93,32 @@ def summary(p, S0):
 
 # ----------------------- STREAMLIT UI -----------------------
 
-st.title("Simularea și optimizarea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
-st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
+st.title("Simularea și optimizarea producției de micoproteină (Fusarium venenatum)")
 
-# BAL OLDALI SÁV (SLIDEREK)
-st.sidebar.header("Parametri de Simulare")
+# BAL OLDALI SÁV: SLIDEREK + GOMBOK
+st.sidebar.header("⚙️ Parametri de Simulare")
+
 p = DEFAULTS.copy()
-p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, 30.0)
-p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, 15.0)
-p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, 25.0)
-p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, 0.20)
-p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, 0.45)
+p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, DEFAULTS["T_opt"], key="T")
+p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, DEFAULTS["kLa"], key="kLa")
+p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, DEFAULTS["S0"], key="S0")
+p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, DEFAULTS["mu_max"], key="mu_max")
+p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, DEFAULTS["protein_frac"], key="protein_frac")
+
+st.sidebar.markdown("---")
+
+# RESET GOMB A CSÚSZKÁK ALATT
+if st.sidebar.button("🔄 Resetare Parametri", use_container_width=True):
+    for key in ["T", "kLa", "S0", "mu_max", "protein_frac"]:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
 
 # SZIMULÁCIÓ LEFUTTATÁSA
 t, X, S, DO, P = simulate(p)
 
-# MODEL MATEMATIC EXPLICAT
-with st.expander("📌 Vezi Modelul Matematic (Ecuații)", expanded=False):
+# MODEL MATEMATIC EXPLICAT (KOMPAKT)
+with st.expander("📌 Vezi Ecuațiile Modelului Matematic", expanded=False):
     col_eq1, col_eq2 = st.columns(2)
     with col_eq1:
         st.latex(r"\mu = \mu_{\max} \cdot \gamma(T) \cdot \frac{S}{K_s + S} \cdot \frac{DO}{K_o + DO}")
@@ -120,49 +127,51 @@ with st.expander("📌 Vezi Modelul Matematic (Ecuații)", expanded=False):
         st.latex(r"\frac{dX}{dt} = \mu \cdot X \quad | \quad \frac{dS}{dt} = -\frac{1}{Y_{X/S}} \cdot \frac{dX}{dt}")
         st.latex(r"\frac{dDO}{dt} = k_L a (C_{\mathrm{sat}} - DO) - 1000 \cdot q_{O2} \cdot X")
 
-# EREDMÉNY KIÍRÁSA ZÖLD KÁRTYÁBAN
+# EREDMÉNY SÁV
 st.success(
-    f"**REZULTAT FINAL (t=30h):** "
-    f"Biomasă (X) = **{X[-1]:.2f} g/L** | "
+    f"**REZULTAT (t=30h):** Biomasă (X) = **{X[-1]:.2f} g/L** | "
     f"Proteină (P) = **{P[-1]:.2f} g/L** | "
     f"Substrat Rămas (S) = **{S[-1]:.2f} g/L**"
 )
 
-# GRAFIKONOK KIRAJZOLÁSA
+# 4 GRAFIKON KOMPAKT ELRENDEZÉSBEN (FIGSIZE REDUKÁLVA GEOMETRIAILAG)
 col1, col2 = st.columns(2)
 
 with col1:
-    fig1, ax_growth = plt.subplots(figsize=(6, 4))
-    ax_growth.plot(t, X, label="Biomasă uscată (X)", color="#2b8a3e", lw=2.2)
-    ax_growth.plot(t, P, label="Proteină estimată (P)", color="#099268", lw=2.2, linestyle="--")
-    ax_growth.set_title("Creșterea Biomasei și Proteinei", fontsize=10, fontweight="bold")
-    ax_growth.set_xlabel("Timp (h)", fontsize=8)
-    ax_growth.set_ylabel("Concentrație (g/L)", fontsize=8)
+    fig1, ax_growth = plt.subplots(figsize=(5, 2.7))
+    ax_growth.plot(t, X, label="Biomasă (X)", color="#2b8a3e", lw=2)
+    ax_growth.plot(t, P, label="Proteină (P)", color="#099268", lw=2, linestyle="--")
+    ax_growth.set_title("Creșterea Biomasei și Proteinei", fontsize=9, fontweight="bold")
+    ax_growth.set_xlabel("Timp (h)", fontsize=7)
+    ax_growth.set_ylabel("g/L", fontsize=7)
+    ax_growth.tick_params(labelsize=7)
     ax_growth.grid(alpha=0.3)
-    ax_growth.legend(fontsize=8)
-    st.pyplot(fig1)
+    ax_growth.legend(fontsize=7)
+    st.pyplot(fig1, use_container_width=True)
 
-    fig2, ax_do = plt.subplots(figsize=(6, 4))
-    ax_do.plot(t, DO, color="#1971c2", lw=2, label="Oxigen dizolvat (DO)")
+    fig2, ax_do = plt.subplots(figsize=(5, 2.7))
+    ax_do.plot(t, DO, color="#1971c2", lw=1.8, label="DO")
     ax_do.axhline(p["Ko"], color="#c92a2a", ls=":", label="Nivel critic (Ko)")
-    ax_do.set_title("Bilanțul Oxigenului Dizolvat", fontsize=10, fontweight="bold")
-    ax_do.set_xlabel("Timp (h)", fontsize=8)
-    ax_do.set_ylabel("DO (mg/L)", fontsize=8)
+    ax_do.set_title("Bilanțul Oxigenului Dizolvat", fontsize=9, fontweight="bold")
+    ax_do.set_xlabel("Timp (h)", fontsize=7)
+    ax_do.set_ylabel("DO (mg/L)", fontsize=7)
+    ax_do.tick_params(labelsize=7)
     ax_do.grid(alpha=0.3)
-    ax_do.legend(fontsize=8)
-    st.pyplot(fig2)
+    ax_do.legend(fontsize=7)
+    st.pyplot(fig2, use_container_width=True)
 
 with col2:
-    fig3, ax_sub = plt.subplots(figsize=(6, 4))
-    ax_sub.plot(t, S, color="#e65c00", lw=2.2, label="Substrat (S)")
-    ax_sub.set_title("Consumul Substratului", fontsize=10, fontweight="bold")
-    ax_sub.set_xlabel("Timp (h)", fontsize=8)
-    ax_sub.set_ylabel("Substrat (g/L)", fontsize=8)
+    fig3, ax_sub = plt.subplots(figsize=(5, 2.7))
+    ax_sub.plot(t, S, color="#e65c00", lw=2, label="Substrat (S)")
+    ax_sub.set_title("Consumul Substratului", fontsize=9, fontweight="bold")
+    ax_sub.set_xlabel("Timp (h)", fontsize=7)
+    ax_sub.set_ylabel("Substrat (g/L)", fontsize=7)
+    ax_sub.tick_params(labelsize=7)
     ax_sub.grid(alpha=0.3)
-    ax_sub.legend(fontsize=8)
-    st.pyplot(fig3)
+    ax_sub.legend(fontsize=7)
+    st.pyplot(fig3, use_container_width=True)
 
-    fig4, ax_compare = plt.subplots(figsize=(6, 4))
+    fig4, ax_compare = plt.subplots(figsize=(5, 2.7))
     results = [summary(p, s) for s in SCENARIO_S0]
     max_p = max(r["Pf"] for r in results) if results else 1.0
     bars = ax_compare.bar(
@@ -170,27 +179,29 @@ with col2:
         [r["Pf"] for r in results],
         color="#74c0fc"
     )
-    ax_compare.set_title("Proteină finală la diferite S_0 inițiale", fontsize=10, fontweight="bold")
-    ax_compare.set_xlabel("Substrat inițial S_0 (g/L)", fontsize=8)
-    ax_compare.set_ylabel("Proteină (g/L)", fontsize=8)
+    ax_compare.set_title("Proteină finală la diferite S_0 inițiale", fontsize=9, fontweight="bold")
+    ax_compare.set_xlabel("S_0 (g/L)", fontsize=7)
+    ax_compare.set_ylabel("Proteină (g/L)", fontsize=7)
+    ax_compare.tick_params(labelsize=7)
     ax_compare.set_ylim(0, max_p * 1.25)
     ax_compare.grid(axis="y", alpha=0.3)
     for bar, r in zip(bars, results):
         ax_compare.text(
             bar.get_x() + bar.get_width()/2, bar.get_height() + (max_p * 0.02),
-            f"{r['Pf']:.2f}", ha="center", va="bottom", fontsize=7.5, fontweight="bold"
+            f"{r['Pf']:.1f}", ha="center", va="bottom", fontsize=6.5, fontweight="bold"
         )
-    st.pyplot(fig4)
+    st.pyplot(fig4, use_container_width=True)
 
-# EXPORT CSV GOMB STREAMLITBEN
+# EXPORT CSV GOMB A BAL OLDALI SÁVBAN A TISZTA FELÜLETÉRT
 csv_buffer = io.StringIO()
 writer = csv.writer(csv_buffer)
 writer.writerow(["timp_ore", "biomasa_g_L", "substrat_g_L", "oxigen_dizolvat_mg_L", "proteina_estimata_g_L"])
 writer.writerows(zip(t, X, S, DO, P))
 
-st.download_button(
-    label="📥 Descarcă Datele Simulării (CSV)",
+st.sidebar.download_button(
+    label="📥 Descarcă Date (CSV)",
     data=csv_buffer.getvalue(),
     file_name="microprotein_simulation_results.csv",
-    mime="text/csv"
+    mime="text/csv",
+    use_container_width=True
 )
