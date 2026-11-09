@@ -99,7 +99,7 @@ st.title("Simularea și optimizarea procesului de producție a micoproteinelor p
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
 # BAL OLDALI SÁV (SLIDEREK)
-st.sidebar.header("Parametri de Simulare")
+st.sidebar.header("Parametrii de Simulare")
 if st.sidebar.button("🔄 Resetare Parametri"):
     for key in ["T", "kLa", "S0", "mu_max", "protein_frac"]:
         if key in st.session_state:
