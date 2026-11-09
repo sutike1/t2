@@ -13,7 +13,22 @@ from scipy.integrate import solve_ivp
 
 # Streamlit oldal beállításai
 st.set_page_config(page_title="Simularea Producției de Micoproteină", layout="wide")
-
+st.markdown("""
+    <style>
+        /* Alapértelmezett cím stílus desktopon */
+        h1 {
+            font-size: 1.8rem !important;
+            line-height: 1.2 !important;
+        }
+        /* Mobilos nézet (768px szélesség alatt) */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.1rem !important;
+                line-height: 1.3 !important;
+            }
+        }
+    </style>
+""", unsafe_allow_html=True)
 # Matplotlib saját mathtext engine-jét használjuk
 plt.rcParams['text.usetex'] = False  
 
