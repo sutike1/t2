@@ -133,41 +133,47 @@ st.success(
     f"Substrat Rămas (S) = **{S[-1]:.2f} g/L**"
 )
 
-# GRAFIKONOK KIRAJZOLÁSA
+# GRAFIKONOK KIRAJZOLÁSA (KISEBB MÉRETBEN: figsize=(5, 2.2))
 col1, col2 = st.columns(2)
 
 with col1:
-    fig1, ax_growth = plt.subplots(figsize=(6, 4))
+    fig1, ax_growth = plt.subplots(figsize=(5, 2.2))
     ax_growth.plot(t, X, label="Biomasă uscată (X)", color="#2b8a3e", lw=2.2)
     ax_growth.plot(t, P, label="Proteină estimată (P)", color="#099268", lw=2.2, linestyle="--")
-    ax_growth.set_title("Creșterea Biomasei și Proteinei", fontsize=10, fontweight="bold")
-    ax_growth.set_xlabel("Timp (h)", fontsize=8)
-    ax_growth.set_ylabel("Concentrație (g/L)", fontsize=8)
+    ax_growth.set_title("Creșterea Biomasei și Proteinei", fontsize=9, fontweight="bold")
+    ax_growth.set_xlabel("Timp (h)", fontsize=7.5)
+    ax_growth.set_ylabel("Concentrație (g/L)", fontsize=7.5)
+    ax_growth.tick_params(labelsize=7)
     ax_growth.grid(alpha=0.3)
-    ax_growth.legend(fontsize=8)
-    st.pyplot(fig1)
+    ax_growth.legend(fontsize=7.5)
+    plt.tight_layout()
+    st.pyplot(fig1, use_container_width=True)
 
-    fig2, ax_do = plt.subplots(figsize=(6, 4))
+    fig2, ax_do = plt.subplots(figsize=(5, 2.2))
     ax_do.plot(t, DO, color="#1971c2", lw=2, label="Oxigen dizolvat (DO)")
     ax_do.axhline(p["Ko"], color="#c92a2a", ls=":", label="Nivel critic (Ko)")
-    ax_do.set_title("Bilanțul Oxigenului Dizolvat", fontsize=10, fontweight="bold")
-    ax_do.set_xlabel("Timp (h)", fontsize=8)
-    ax_do.set_ylabel("DO (mg/L)", fontsize=8)
+    ax_do.set_title("Bilanțul Oxigenului Dizolvat", fontsize=9, fontweight="bold")
+    ax_do.set_xlabel("Timp (h)", fontsize=7.5)
+    ax_do.set_ylabel("DO (mg/L)", fontsize=7.5)
+    ax_do.tick_params(labelsize=7)
     ax_do.grid(alpha=0.3)
-    ax_do.legend(fontsize=8)
-    st.pyplot(fig2)
+    ax_do.legend(fontsize=7.5)
+    plt.tight_layout()
+    st.pyplot(fig2, use_container_width=True)
 
 with col2:
-    fig3, ax_sub = plt.subplots(figsize=(6, 4))
+    fig3, ax_sub = plt.subplots(figsize=(5, 2.2))
     ax_sub.plot(t, S, color="#e65c00", lw=2.2, label="Substrat (S)")
-    ax_sub.set_title("Consumul Substratului", fontsize=10, fontweight="bold")
-    ax_sub.set_xlabel("Timp (h)", fontsize=8)
-    ax_sub.set_ylabel("Substrat (g/L)", fontsize=8)
+    ax_sub.set_title("Consumul Substratului", fontsize=9, fontweight="bold")
+    ax_sub.set_xlabel("Timp (h)", fontsize=7.5)
+    ax_sub.set_ylabel("Substrat (g/L)", fontsize=7.5)
+    ax_sub.tick_params(labelsize=7)
     ax_sub.grid(alpha=0.3)
-    ax_sub.legend(fontsize=8)
-    st.pyplot(fig3)
+    ax_sub.legend(fontsize=7.5)
+    plt.tight_layout()
+    st.pyplot(fig3, use_container_width=True)
 
-    fig4, ax_compare = plt.subplots(figsize=(6, 4))
+    fig4, ax_compare = plt.subplots(figsize=(5, 2.2))
     results = [summary(p, s) for s in SCENARIO_S0]
     max_p = max(r["Pf"] for r in results) if results else 1.0
     bars = ax_compare.bar(
@@ -175,17 +181,19 @@ with col2:
         [r["Pf"] for r in results],
         color="#74c0fc"
     )
-    ax_compare.set_title("Proteină finală la diferite S_0 inițiale", fontsize=10, fontweight="bold")
-    ax_compare.set_xlabel("Substrat inițial S_0 (g/L)", fontsize=8)
-    ax_compare.set_ylabel("Proteină (g/L)", fontsize=8)
+    ax_compare.set_title("Proteină finală la diferite S_0 inițiale", fontsize=9, fontweight="bold")
+    ax_compare.set_xlabel("Substrat inițial S_0 (g/L)", fontsize=7.5)
+    ax_compare.set_ylabel("Proteină (g/L)", fontsize=7.5)
+    ax_compare.tick_params(labelsize=7)
     ax_compare.set_ylim(0, max_p * 1.25)
     ax_compare.grid(axis="y", alpha=0.3)
     for bar, r in zip(bars, results):
         ax_compare.text(
             bar.get_x() + bar.get_width()/2, bar.get_height() + (max_p * 0.02),
-            f"{r['Pf']:.2f}", ha="center", va="bottom", fontsize=7.5, fontweight="bold"
+            f"{r['Pf']:.2f}", ha="center", va="bottom", fontsize=7, fontweight="bold"
         )
-    st.pyplot(fig4)
+    plt.tight_layout()
+    st.pyplot(fig4, use_container_width=True)
 
 # EXPORT CSV GOMB STREAMLITBEN
 csv_buffer = io.StringIO()
