@@ -155,7 +155,6 @@ SLIDER_DEFAULTS = {
     "T": DEFAULTS["T"],
     "kLa": DEFAULTS["kLa"],
     "S0": DEFAULTS["S0"],
-    "Ks_mg": round(DEFAULTS["Ks"] * 1000.0, 1),
     "mu_max": DEFAULTS["mu_max"],
     "protein_frac": DEFAULTS["protein_frac"],
 }
@@ -173,20 +172,6 @@ p = DEFAULTS.copy()
 p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T")
 p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 10.0, 400.0, key="kLa")
 p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0")
-
-ks_mg = st.sidebar.slider(
-    "Const. de semisaturație K_s (mg/L)",
-    min_value=0.1,
-    max_value=10.0,
-    step=0.1,
-    key="Ks_mg"
-)
-p["Ks"] = ks_mg / 1000.0
-st.sidebar.caption(
-    "K_s este foarte mic (afinitate mare): în acest interval influența lui asupra "
-    "rezultatului final este practic nulă."
-)
-
 p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max")
 p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac")
 
@@ -261,7 +246,7 @@ with col1:
     ax_growth.legend(fontsize=7.5)
     plt.tight_layout()
     st.pyplot(fig1, use_container_width=True)
-    plt.close(fig1)  # Memória felszabadítása
+    plt.close(fig1)
 
     fig2, ax_do = plt.subplots(figsize=(5, 2.2))
     ax_do.plot(t, DO, color="#1971c2", lw=2, label="Oxigen dizolvat (DO)")
@@ -274,7 +259,7 @@ with col1:
     ax_do.legend(fontsize=7.5)
     plt.tight_layout()
     st.pyplot(fig2, use_container_width=True)
-    plt.close(fig2)  # Memória felszabadítása
+    plt.close(fig2)
 
 with col2:
     fig3, ax_sub = plt.subplots(figsize=(5, 2.2))
@@ -287,7 +272,7 @@ with col2:
     ax_sub.legend(fontsize=7.5)
     plt.tight_layout()
     st.pyplot(fig3, use_container_width=True)
-    plt.close(fig3)  # Memória felszabadítása
+    plt.close(fig3)
 
     fig4, ax_compare = plt.subplots(figsize=(5, 2.2))
     results = [summary(p, s) for s in SCENARIO_S0]
@@ -310,8 +295,7 @@ with col2:
         )
     plt.tight_layout()
     st.pyplot(fig4, use_container_width=True)
-    plt.close(fig4)  # Memória felszabadítása
-
+    plt.close(fig4)
 
 
 # EXPORT CSV GOMB STREAMLITBEN
