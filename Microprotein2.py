@@ -19,6 +19,10 @@ st.markdown("""
             font-size: 1.8rem !important;
             line-height: 1.2 !important;
         }
+       .highlight-word {
+            color: #ff4b4b !important;
+            font-weight: bold;
+        }
       
         @media (max-width: 768px) {
             h1 {
@@ -139,8 +143,11 @@ def cached_protein(base_key, T, kLa, S0):
 
 
 # ----------------------- STREAMLIT UI -----------------------
-
-st.title("Simularea procesului de producție de micoproteină prin fermentație cu Fusarium venenatum")
+st.markdown(
+    '<h1>Simularea procesului de producție de <span class="highlight-word">micoproteină</span> '
+    'prin fermentație cu <span class="highlight-word">Fusarium venenatum</span></h1>',
+    unsafe_allow_html=True
+)
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
 # Valorile inițiale ale sliderelor (session_state = singura sursă de adevăr)
