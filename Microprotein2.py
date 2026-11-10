@@ -128,11 +128,11 @@ p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T", value=DEFA
 p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, key="kLa", value=DEFAULTS["kLa"])
 p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0", value=DEFAULTS["S0"])
 
-# CSÚSZKA MG/L-BEN (5.4 mg/L = 0.0054 g/L)
+# CSÚSZKA MG/L-BEN (0.1 - 10.0 mg/L tartományban)
 ks_mg = st.sidebar.slider(
     "Affinitate substrat K_s (mg/L)", 
     min_value=0.1, 
-    max_value=100.0, 
+    max_value=10.0, 
     value=DEFAULTS["Ks"] * 1000.0, 
     step=0.1,
     key="Ks_mg"
