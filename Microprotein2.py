@@ -156,7 +156,7 @@ for k, v in SLIDER_DEFAULTS.items():
 
 # BAL OLDALI SÁV (SLIDEREK)
 st.sidebar.header("Parametrii de Simulare")
-if st.sidebar.button("🔄 Resetare parametrii"):
+if st.sidebar.button("🔄 Resetare Parametri"):
     for k, v in SLIDER_DEFAULTS.items():
         st.session_state[k] = v
     st.rerun()
@@ -208,42 +208,7 @@ with st.expander("📌 Vezi Modelul Matematic (Ecuații)", expanded=False):
         st.latex(r"\frac{dDO}{dt} = k_L a (C_{\mathrm{sat}} - DO) - 1000 \cdot q_{O2} \cdot X")
 
 
-# EREDMÉNY KIÍRÁSA ZÖLD KÁRTYÁBAN
-st.success(
-    f"**REZULTAT FINAL (t={p['hours']:.0f}h):** "
-    f"Biomasă (X) = **{X[-1]:.2f} g/L** | "
-    f"Proteină (P) = **{P[-1]:.2f} g/L** | "
-    f"Substrat Rămas (S) = **{S[-1]:.2f} g/L**"
-)
-
-# FACTORUL LIMITANT
-kind, gamma_T, fO_mean = diagnose(p, t, X, S, DO)
-if kind == "substrat":
-    st.info(
-        f"**Factor limitant: SUBSTRATUL.** Glucoza s-a epuizat înainte de finalul "
-        f"fermentației (S final ≈ {S[-1]:.2f} g/L). Pentru mai multă proteină mărește S_0 "
-        f"(și, la nevoie, kLa)."
-    )
-elif kind == "oxigen":
-    st.info(
-        f"**Factor limitant: OXIGENUL.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit, dar "
-        f"aprovizionarea cu oxigen nu ține pasul cu consumul. Pentru mai multă proteină mărește kLa."
-    )
-elif kind == "temperatura":
-    st.info(
-        f"**Factor limitant: TEMPERATURA.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit; "
-        f"la T = {p['T']:.1f} °C viteza de creștere este redusă la {gamma_T * 100:.0f}% din maxim. "
-        f"Apropie T de T_opt = {p['T_opt']:.0f} °C."
-    )
-else:
-    st.info(
-        f"**Factor limitant: TIMPUL.** Nici oxigenul, nici temperatura nu limitează, dar în "
-        f"{p['hours']:.0f} h substratul nu se epuizează (rămân {S[-1]:.1f} g/L). "
-        f"Mărește μ_max sau reduce S_0."
-    )
-
-
-# GRAFIKONOK KIRAJZOLÁSA
+# 1. GRAFIKONOK KIRAJZOLÁSA (ELŐRE HOZVA)
 col1, col2 = st.columns(2)
 
 with col1:
@@ -308,6 +273,41 @@ with col2:
     plt.tight_layout()
     st.pyplot(fig4, use_container_width=True)
     plt.close(fig4)
+
+
+# 2. EREDMÉNY KIÍRÁSA ZÖLD KÁRTYÁBAN (GRAFIKONOK UTÁN)
+st.success(
+    f"**REZULTAT FINAL (t={p['hours']:.0f}h):** "
+    f"Biomasă (X) = **{X[-1]:.2f} g/L** | "
+    f"Proteină (P) = **{P[-1]:.2f} g/L** | "
+    f"Substrat Rămas (S) = **{S[-1]:.2f} g/L**"
+)
+
+# 3. FACTORUL LIMITANT (ZÖLD KÁRTYA UTÁN)
+kind, gamma_T, fO_mean = diagnose(p, t, X, S, DO)
+if kind == "substrat":
+    st.info(
+        f"**Factor limitant al randamentului: SUBSTRATUL.** Glucoza s-a epuizat înainte de finalul "
+        f"fermentației (S final ≈ {S[-1]:.2f} g/L). Pentru mai multă proteină mărește S_0 "
+        f"(și, la nevoie, kLa)."
+    )
+elif kind == "oxigen":
+    st.info(
+        f"**Factor limitant: OXIGENUL.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit, dar "
+        f"aprovizionarea cu oxigen nu ține pasul cu consumul. Pentru mai multă proteină mărește kLa."
+    )
+elif kind == "temperatura":
+    st.info(
+        f"**Factor limitant: TEMPERATURA.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit; "
+        f"la T = {p['T']:.1f} °C viteza de creștere este redusă la {gamma_T * 100:.0f}% din maxim. "
+        f"Apropie T de T_opt = {p['T_opt']:.0f} °C."
+    )
+else:
+    st.info(
+        f"**Factor limitant: TIMPUL.** Nici oxigenul, nici temperatura nu limitează, dar în "
+        f"{p['hours']:.0f} h substratul nu se epuizează (rămân {S[-1]:.1f} g/L). "
+        f"Mărește μ_max sau reduce S_0."
+    )
 
 
 # EXPORT CSV GOMB STREAMLITBEN
