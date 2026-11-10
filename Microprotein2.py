@@ -172,13 +172,13 @@ p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, ke
 st.sidebar.markdown("---")
 st.sidebar.subheader("📌 Parametrii inițiali")
 st.sidebar.markdown(f"""
-* **Temperatură ($T_0$):** `{DEFAULTS['T']:.1f} °C` (Optimum: `{DEFAULTS['T_opt']:.1f} °C`)
+* **Temperatură ($T_0$):** `{DEFAULTS['T']:.1f} °C` 
 * **Biomasă inițială ($X_0$):** `{DEFAULTS['X0']:.2f} g/L`
 * **Substrat inițial ($S_0$):** `{DEFAULTS['S0']:.1f} g/L`
-* **Oxigen dizolvat inițial ($DO_0$):** `{DEFAULTS['DO0']:.1f} mg/L`
+* **Oxigen dizolvat ($DO_0$):** `{DEFAULTS['DO0']:.1f} mg/L`
 * **Viteza max. de creștere ($\mu_{{\max}}$):** `{DEFAULTS['mu_max']:.2f} 1/h`
 * **Aerare ($k_L a$):** `{DEFAULTS['kLa']:.1f} 1/h`
-* **Constatantă $K_s$ (glucoză):** `{DEFAULTS['Ks']*1000:.1f} mg/L` (`{DEFAULTS['Ks']} g/L`)
+* **Constatantă $K_s$ (glucoză):** `{DEFAULTS['Ks']*1000:.1f} mg/L` 
 * **Constatantă $K_o$ (oxigen):** `{DEFAULTS['Ko']:.1f} mg O₂/L`
 * **Oxigen la saturație ($C_{{\mathrm{{sat}}}}$):** `{DEFAULTS['Csat']:.1f} mg/L`
 * **Randament biomasă ($Y_{{X/S}}$):** `{DEFAULTS['Yxs']:.2f} g/g`
