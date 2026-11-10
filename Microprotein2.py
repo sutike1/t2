@@ -140,7 +140,7 @@ def cached_protein(base_key, T, kLa, S0):
 
 # ----------------------- STREAMLIT UI -----------------------
 
-st.title("Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
+st.title("Simularea procesului de producție de micoproteină prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
 # Valorile inițiale ale sliderelor (session_state = singura sursă de adevăr)
