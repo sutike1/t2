@@ -112,14 +112,7 @@ def summary(p, S0):
 
 
 def diagnose(p, t, X, S, DO):
-    """Care factor a determinat rezultatul final?
-
-    - 'substrat'    : glucoza s-a epuizat (randamentul final e limitat de S_0)
-    - 'oxigen'      : a rămas substrat, dar oxigenul a frânat creșterea
-    - 'temperatura' : a rămas substrat, dar T e prea departe de T_opt
-    - 'timp'        : a rămas substrat, dar nici O2, nici T nu limitează; 30 h nu ajung
-    Returnează (tip, gamma_T, fO_mediu); mediile sunt ponderate cu viteza de creștere.
-    """
+    """Care factor a determinat rezultatul final?"""
     gamma_T = float(np.exp(-((p["T"] - p["T_opt"]) / p["T_sigma"]) ** 2))
     fO = DO / (p["Ko"] + DO)
     w = np.maximum(np.gradient(X, t), 0.0)
@@ -147,7 +140,7 @@ def cached_protein(base_key, T, kLa, S0):
 
 # ----------------------- STREAMLIT UI -----------------------
 
-st.title("Simularea producției de Micoproteină prin fermentație cu Fusarium venenatum")
+st.title("Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
 # Valorile inițiale ale sliderelor (session_state = singura sursă de adevăr)
@@ -174,6 +167,25 @@ p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 10.0, 400.0, key="kLa")
 p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0")
 p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max")
 p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac")
+
+# PARAMETRII INIȚIALI KIÍRÁSA A CSÚSZKÁK ALATT
+st.sidebar.markdown("---")
+st.sidebar.subheader("📌 Parametrii inițiali")
+st.sidebar.markdown(f"""
+* **Temperatură ($T_0$):** `{DEFAULTS['T']:.1f} °C` (Optimum: `{DEFAULTS['T_opt']:.1f} °C`)
+* **Biomasă inițială ($X_0$):** `{DEFAULTS['X0']:.2f} g/L`
+* **Substrat inițial ($S_0$):** `{DEFAULTS['S0']:.1f} g/L`
+* **Oxigen dizolvat inițial ($DO_0$):** `{DEFAULTS['DO0']:.1f} mg/L`
+* **Viteza max. de creștere ($\mu_{{\max}}$):** `{DEFAULTS['mu_max']:.2f} 1/h`
+* **Aerare ($k_L a$):** `{DEFAULTS['kLa']:.1f} 1/h`
+* **Constatantă $K_s$ (glucoză):** `{DEFAULTS['Ks']*1000:.1f} mg/L` (`{DEFAULTS['Ks']} g/L`)
+* **Constatantă $K_o$ (oxigen):** `{DEFAULTS['Ko']:.1f} mg O₂/L`
+* **Oxigen la saturație ($C_{{\mathrm{{sat}}}}$):** `{DEFAULTS['Csat']:.1f} mg/L`
+* **Randament biomasă ($Y_{{X/S}}$):** `{DEFAULTS['Yxs']:.2f} g/g`
+* **Consum specific $O_2$ ($q_{{O2}}$):** `{DEFAULTS['qO2']:.2f} g O₂/(g·h)`
+* **Fracție proteică:** `{DEFAULTS['protein_frac']*100:.0f}%` (`{DEFAULTS['protein_frac']:.2f} g/g`)
+* **Durată fermentație:** `{DEFAULTS['hours']:.0f} h`
+""")
 
 # SZIMULÁCIÓ LEFUTTATÁSA
 t, X, S, DO, P = simulate(p)
