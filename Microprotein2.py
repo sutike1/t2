@@ -15,12 +15,11 @@ from scipy.integrate import solve_ivp
 st.set_page_config(page_title="Simularea Producției de Micoproteină", layout="wide")
 st.markdown("""
     <style>
-        /* Alapértelmezett cím stílus desktopon */
-        h1 {
+       h1 {
             font-size: 1.8rem !important;
             line-height: 1.2 !important;
         }
-        /* Mobilos nézet (768px szélesség alatt) */
+      
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.1rem !important;
@@ -29,7 +28,7 @@ st.markdown("""
         }
     </style>
 """, unsafe_allow_html=True)
-# Matplotlib saját mathtext engine-jét használjuk
+
 plt.rcParams['text.usetex'] = False  
 
 # ----------------------- PARAMETRI DIDACTICI -----------------------
@@ -137,11 +136,19 @@ t, X, S, DO, P = simulate(p)
 with st.expander("📌 Vezi Modelul Matematic (Ecuații)", expanded=False):
     col_eq1, col_eq2 = st.columns(2)
     with col_eq1:
+        st.write("**Viteza specifică de creștere:**")
         st.latex(r"\mu = \mu_{\max} \cdot \gamma(T) \cdot \frac{S}{K_s + S} \cdot \frac{DO}{K_o + DO}")
+        
+        st.write("**Influența temperaturii:**")
         st.latex(r"\gamma(T) = \exp\left( -\left[ \frac{T - T_{\mathrm{opt}}}{T_{\sigma}} \right]^2 \right)")
+        
     with col_eq2:
+        st.write("**Creșterea biomasei & Consumul substratului:**")
         st.latex(r"\frac{dX}{dt} = \mu \cdot X \quad | \quad \frac{dS}{dt} = -\frac{1}{Y_{X/S}} \cdot \frac{dX}{dt}")
+        
+        st.write("**Bilanțul oxigenului:**")
         st.latex(r"\frac{dDO}{dt} = k_L a (C_{\mathrm{sat}} - DO) - 1000 \cdot q_{O2} \cdot X")
+
 
 # EREDMÉNY KIÍRÁSA ZÖLD KÁRTYÁBAN
 st.success(
