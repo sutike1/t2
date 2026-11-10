@@ -315,73 +315,7 @@ with col2:
     st.pyplot(fig4, use_container_width=True)
     plt.close(fig4)  # Memória felszabadítása
 
-# ----------------------- ANALIZĂ COMBINATĂ: S_0 × kLa × T -----------------------
-st.markdown("---")
-st.subheader("Analiză combinată: substrat × oxigen × temperatură")
-st.caption(
-    "Fiecare hartă variază doi factori simultan; al treilea rămâne la valoarea setată din slidere. "
-    "Culoarea = proteina finală (g/L). ✕ roșu = punctul curent, ★ = maximul din grila hărții. "
-    "Proteina crește cu S_0 atâta timp cât substratul se consumă în timpul disponibil, deci optimul "
-    "real se găsește de obicei în combinația kLa și T."
-)
 
-GRID_N = 12
-RANGES = {
-    "T": np.linspace(15.0, 40.0, GRID_N),
-    "kLa": np.linspace(10.0, 400.0, GRID_N),
-    "S0": np.linspace(5.0, 50.0, GRID_N),
-}
-LABELS = {
-    "T": "Temperatură (°C)",
-    "kLa": "kLa (1/h)",
-    "S0": "Substrat inițial S_0 (g/L)",
-}
-# parametrii care nu sunt baleiați (influențează toate hărțile)
-base_key = tuple(sorted((k, v) for k, v in p.items() if k not in ("T", "kLa", "S0")))
-
-
-def contour_map(xname, yname):
-    xs, ys = RANGES[xname], RANGES[yname]
-    cur = {"T": p["T"], "kLa": p["kLa"], "S0": p["S0"]}
-    Z = np.zeros((len(ys), len(xs)))
-    for i, yv in enumerate(ys):
-        for j, xv in enumerate(xs):
-            v = dict(cur)
-            v[xname], v[yname] = xv, yv
-            Z[i, j] = cached_protein(base_key, v["T"], v["kLa"], v["S0"])
-
-    zmin, zmax = float(Z.min()), float(Z.max())
-    if zmax - zmin < 1e-6:
-        zmax = zmin + 1e-3
-    levels = np.linspace(zmin, zmax, 14)
-
-    fig, ax = plt.subplots(figsize=(5, 3.4))
-    cf = ax.contourf(xs, ys, Z, levels=levels, cmap="YlGn")
-    ax.contour(xs, ys, Z, levels=levels, colors="k", linewidths=0.3, alpha=0.4)
-    cb = fig.colorbar(cf, ax=ax)
-    cb.ax.tick_params(labelsize=6.5)
-    cb.set_label("Proteină (g/L)", fontsize=7)
-
-    i, j = np.unravel_index(np.argmax(Z), Z.shape)
-    ax.plot(xs[j], ys[i], marker="*", color="gold", markeredgecolor="k", markersize=13, ls="")
-    ax.plot(p[xname], p[yname], marker="x", color="#c92a2a", markersize=9, mew=2.2, ls="")
-    ax.set_title(f"{xname} × {yname}", fontsize=9, fontweight="bold")
-    ax.set_xlabel(LABELS[xname], fontsize=7.5)
-    ax.set_ylabel(LABELS[yname], fontsize=7.5)
-    ax.tick_params(labelsize=7)
-    plt.tight_layout()
-    st.pyplot(fig, use_container_width=True)
-    plt.close(fig)  # Memória felszabadítása
-
-
-with st.spinner("Se calculează hărțile (prima dată durează câteva secunde)..."):
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        contour_map("S0", "kLa")
-    with m2:
-        contour_map("T", "kLa")
-    with m3:
-        contour_map("T", "S0")
 
 # EXPORT CSV GOMB STREAMLITBEN
 csv_buffer = io.StringIO()
