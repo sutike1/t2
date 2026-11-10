@@ -156,7 +156,7 @@ for k, v in SLIDER_DEFAULTS.items():
 
 # BAL OLDALI SÁV (SLIDEREK)
 st.sidebar.header("Parametrii de Simulare")
-if st.sidebar.button("🔄 Resetare Parametri"):
+if st.sidebar.button("🔄 Resetare parametrii"):
     for k, v in SLIDER_DEFAULTS.items():
         st.session_state[k] = v
     st.rerun()
