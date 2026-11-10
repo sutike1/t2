@@ -1,6 +1,6 @@
 """
 SIMULATOR INTEGRAT DE MICROPROTEINE – model didactic de fermentatie batch
-Titlu proiect: Simularea și optimizarea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum
+Titlu proiect: Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum
 Autor: Jánosi-Rancz Júlia (Biotehnologii industriale I.)
 """
 
@@ -36,7 +36,7 @@ DEFAULTS = {
     "mu_max": 0.20,       # 1/h, demonstrativ
     "T_opt": 30.0,        # °C, demonstrativ
     "T_sigma": 6.0,       # °C, lățimea curbei termice
-    "Ks": 0.8,            # g/L
+    "Ks": 0.0054,         # g/L (F. venenatum glükóz affinitása: 30 µM ≈ 5.4 mg/L)
     "Ko": 0.5,            # mg O2/L
     "Csat": 8.0,          # mg O2/L
     "kLa": 15.0,          # 1/h
@@ -109,15 +109,16 @@ def summary(p, S0):
 
 # ----------------------- STREAMLIT UI -----------------------
 
-st.title("Simularea și optimizarea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
+st.title("Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
-# BAL OLDALI SÁV (SLIDEREK)
+# BAL OLDALI SÁV (SLIDEREK & INPUTOK)
 st.sidebar.header("Parametrii de Simulare")
 if st.sidebar.button("🔄 Resetare Parametri"):
     st.session_state["T"] = DEFAULTS["T_opt"]
     st.session_state["kLa"] = DEFAULTS["kLa"]
     st.session_state["S0"] = DEFAULTS["S0"]
+    st.session_state["Ks"] = DEFAULTS["Ks"]
     st.session_state["mu_max"] = DEFAULTS["mu_max"]
     st.session_state["protein_frac"] = DEFAULTS["protein_frac"]
     st.rerun()
@@ -126,6 +127,18 @@ p = DEFAULTS.copy()
 p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T", value=DEFAULTS["T_opt"])
 p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, key="kLa", value=DEFAULTS["kLa"])
 p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0", value=DEFAULTS["S0"])
+
+# Ks beviteli mező beszúrása a 111. sor után
+p["Ks"] = st.sidebar.number_input(
+    "Ks - Affinitate substrat (g/L)", 
+    min_value=0.0001, 
+    max_value=1.0000, 
+    value=DEFAULTS["Ks"], 
+    step=0.0010,
+    key="Ks",
+    format="%.4f"
+)
+
 p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max", value=DEFAULTS["mu_max"])
 p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac", value=DEFAULTS["protein_frac"])
 
