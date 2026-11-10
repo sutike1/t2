@@ -244,10 +244,7 @@ else:
         f"{p['hours']:.0f} h substratul nu se epuizează (rămân {S[-1]:.1f} g/L). "
         f"Mărește μ_max sau reduce S_0."
     )
-st.caption(
-    f"Reducerea medie a vitezei de creștere în faza de creștere: "
-    f"temperatură −{(1 - gamma_T) * 100:.0f}%, oxigen −{(1 - fO_mean) * 100:.0f}%."
-)
+
 
 # GRAFIKONOK KIRAJZOLÁSA
 col1, col2 = st.columns(2)
