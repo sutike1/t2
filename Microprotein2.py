@@ -220,7 +220,7 @@ st.success(
 kind, gamma_T, fO_mean = diagnose(p, t, X, S, DO)
 if kind == "substrat":
     st.info(
-        f"**Factor limitant al randamentului: SUBSTRATUL.** Glucoza s-a epuizat înainte de finalul "
+        f"**Factor limitant: SUBSTRATUL.** Glucoza s-a epuizat înainte de finalul "
         f"fermentației (S final ≈ {S[-1]:.2f} g/L). Pentru mai multă proteină mărește S_0 "
         f"(și, la nevoie, kLa)."
     )
