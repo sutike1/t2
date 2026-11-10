@@ -1,5 +1,5 @@
 """
-SIMULATOR INTEGRAT DE MICROPROTEINE – model didactic de fermentatie batch
+SIMULATOR INTEGRAT DE MICOPROTEINE – model didactic de fermentatie batch
 Titlu proiect: Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum
 Autor: Jánosi-Rancz Júlia (Biotehnologii industriale I.)
 """
@@ -34,12 +34,13 @@ plt.rcParams['text.usetex'] = False
 # ----------------------- PARAMETRI DIDACTICI -----------------------
 DEFAULTS = {
     "mu_max": 0.20,       # 1/h, demonstrativ
+    "T": 30.0,            # °C, valoarea inițială a sliderului
     "T_opt": 30.0,        # °C, demonstrativ
     "T_sigma": 6.0,       # °C, lățimea curbei termice
     "Ks": 0.0054,         # g/L (F. venenatum glükóz affinitása: 30 µM ≈ 5.4 mg/L)
-    "Ko": 0.5,            # mg O2/L
+    "Ko": 0.5,            # mg O2/L, constanta de semisaturație pentru oxigen
     "Csat": 8.0,          # mg O2/L
-    "kLa": 15.0,          # 1/h
+    "kLa": 150.0,         # 1/h
     "Yxs": 0.48,          # g biomasă / g substrat
     "qO2": 0.08,          # g O2 / (g biomasă * h)
     "protein_frac": 0.45, # g proteină / g biomasă uscată
@@ -78,17 +79,19 @@ def rhs(t, y, p):
     return [dX, dS, dDO]
 
 
-def simulate(p, S0=None, points=200):
+def simulate(p, S0=None, kLa=None, points=200):
     p_sim = p.copy()
     if S0 is not None:
         p_sim["S0"] = float(S0)
+    if kLa is not None:
+        p_sim["kLa"] = float(kLa)
     t_eval = np.linspace(0, p_sim["hours"], points)
     y0 = [p_sim["X0"], p_sim["S0"], p_sim["DO0"]]
     
     sol = solve_ivp(
         lambda t, y: rhs(t, y, p_sim),
         (0, p_sim["hours"]), y0, t_eval=t_eval,
-        method="Radau", rtol=1e-5, atol=1e-7
+        method="LSODA", rtol=1e-5, atol=1e-7
     )
     if not sol.success:
         raise RuntimeError(sol.message)
@@ -107,39 +110,85 @@ def summary(p, S0):
         "Yxs_observed": gain / used if used > 1e-12 else 0.0
     }
 
+
+def diagnose(p, t, X, S, DO):
+    """Care factor a determinat rezultatul final?
+
+    - 'substrat'    : glucoza s-a epuizat (randamentul final e limitat de S_0)
+    - 'oxigen'      : a rămas substrat, dar oxigenul a frânat creșterea
+    - 'temperatura' : a rămas substrat, dar T e prea departe de T_opt
+    - 'timp'        : a rămas substrat, dar nici O2, nici T nu limitează; 30 h nu ajung
+    Returnează (tip, gamma_T, fO_mediu); mediile sunt ponderate cu viteza de creștere.
+    """
+    gamma_T = float(np.exp(-((p["T"] - p["T_opt"]) / p["T_sigma"]) ** 2))
+    fO = DO / (p["Ko"] + DO)
+    w = np.maximum(np.gradient(X, t), 0.0)
+    fO_mean = float(np.average(fO, weights=w)) if w.sum() > 1e-9 else float(np.mean(fO))
+
+    if S[-1] <= 0.01 * p["S0"]:
+        kind = "substrat"
+    elif min(gamma_T, fO_mean) >= 0.9:
+        kind = "timp"
+    elif gamma_T <= fO_mean:
+        kind = "temperatura"
+    else:
+        kind = "oxigen"
+    return kind, gamma_T, fO_mean
+
+
+@st.cache_data(show_spinner=False)
+def cached_protein(base_key, T, kLa, S0):
+    """Proteina finală (g/L) pentru o combinație T, kLa, S_0; base_key = restul parametrilor."""
+    q = dict(base_key)
+    q["T"] = float(T)
+    _, _, _, _, Pq = simulate(q, S0=float(S0), kLa=float(kLa), points=2)
+    return float(Pq[-1])
+
+
 # ----------------------- STREAMLIT UI -----------------------
 
 st.title("Simularea producției de Micoproteină prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
+# Valorile inițiale ale sliderelor (session_state = singura sursă de adevăr)
+SLIDER_DEFAULTS = {
+    "T": DEFAULTS["T"],
+    "kLa": DEFAULTS["kLa"],
+    "S0": DEFAULTS["S0"],
+    "Ks_mg": round(DEFAULTS["Ks"] * 1000.0, 1),
+    "mu_max": DEFAULTS["mu_max"],
+    "protein_frac": DEFAULTS["protein_frac"],
+}
+for k, v in SLIDER_DEFAULTS.items():
+    st.session_state.setdefault(k, v)
+
 # BAL OLDALI SÁV (SLIDEREK)
 st.sidebar.header("Parametrii de Simulare")
 if st.sidebar.button("🔄 Resetare Parametri"):
-    st.session_state["T"] = DEFAULTS["T_opt"]
-    st.session_state["kLa"] = DEFAULTS["kLa"]
-    st.session_state["S0"] = DEFAULTS["S0"]
-    st.session_state["Ks_mg"] = DEFAULTS["Ks"] * 1000.0
-    st.session_state["mu_max"] = DEFAULTS["mu_max"]
-    st.session_state["protein_frac"] = DEFAULTS["protein_frac"]
+    for k, v in SLIDER_DEFAULTS.items():
+        st.session_state[k] = v
     st.rerun()
 
 p = DEFAULTS.copy()
-p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T", value=DEFAULTS["T_opt"])
-p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 200.0, key="kLa", value=DEFAULTS["kLa"])
-p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0", value=DEFAULTS["S0"])
+p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T")
+p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 10.0, 400.0, key="kLa")
+p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0")
 
 ks_mg = st.sidebar.slider(
-    "Const. de semisaturație K_s (mg/L)", 
-    min_value=0.1, 
-    max_value=10.0, 
-    value=DEFAULTS["Ks"] * 1000.0, 
+    "Const. de semisaturație K_s (mg/L)",
+    min_value=0.1,
+    max_value=10.0,
     step=0.1,
     key="Ks_mg"
 )
 p["Ks"] = ks_mg / 1000.0
+st.sidebar.caption(
+    "K_s este foarte mic (afinitate mare): în acest interval influența lui asupra "
+    "rezultatului final este practic nulă."
+)
 
-p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max", value=DEFAULTS["mu_max"])
-p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac", value=DEFAULTS["protein_frac"])
+p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max")
+p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac")
 
 # SZIMULÁCIÓ LEFUTTATÁSA
 t, X, S, DO, P = simulate(p)
@@ -164,10 +213,40 @@ with st.expander("📌 Vezi Modelul Matematic (Ecuații)", expanded=False):
 
 # EREDMÉNY KIÍRÁSA ZÖLD KÁRTYÁBAN
 st.success(
-    f"**REZULTAT FINAL (t=30h):** "
+    f"**REZULTAT FINAL (t={p['hours']:.0f}h):** "
     f"Biomasă (X) = **{X[-1]:.2f} g/L** | "
     f"Proteină (P) = **{P[-1]:.2f} g/L** | "
     f"Substrat Rămas (S) = **{S[-1]:.2f} g/L**"
+)
+
+# FACTORUL LIMITANT
+kind, gamma_T, fO_mean = diagnose(p, t, X, S, DO)
+if kind == "substrat":
+    st.info(
+        f"**Factor limitant al randamentului: SUBSTRATUL.** Glucoza s-a epuizat înainte de finalul "
+        f"fermentației (S final ≈ {S[-1]:.2f} g/L). Pentru mai multă proteină mărește S_0 "
+        f"(și, la nevoie, kLa)."
+    )
+elif kind == "oxigen":
+    st.info(
+        f"**Factor limitant: OXIGENUL.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit, dar "
+        f"aprovizionarea cu oxigen nu ține pasul cu consumul. Pentru mai multă proteină mărește kLa."
+    )
+elif kind == "temperatura":
+    st.info(
+        f"**Factor limitant: TEMPERATURA.** Au rămas {S[-1]:.1f} g/L de substrat nefolosit; "
+        f"la T = {p['T']:.1f} °C viteza de creștere este redusă la {gamma_T * 100:.0f}% din maxim. "
+        f"Apropie T de T_opt = {p['T_opt']:.0f} °C."
+    )
+else:
+    st.info(
+        f"**Factor limitant: TIMPUL.** Nici oxigenul, nici temperatura nu limitează, dar în "
+        f"{p['hours']:.0f} h substratul nu se epuizează (rămân {S[-1]:.1f} g/L). "
+        f"Mărește μ_max sau reduce S_0."
+    )
+st.caption(
+    f"Reducerea medie a vitezei de creștere în faza de creștere: "
+    f"temperatură −{(1 - gamma_T) * 100:.0f}%, oxigen −{(1 - fO_mean) * 100:.0f}%."
 )
 
 # GRAFIKONOK KIRAJZOLÁSA
@@ -189,7 +268,7 @@ with col1:
 
     fig2, ax_do = plt.subplots(figsize=(5, 2.2))
     ax_do.plot(t, DO, color="#1971c2", lw=2, label="Oxigen dizolvat (DO)")
-    ax_do.axhline(p["Ko"], color="#c92a2a", ls=":", label="Nivel critic (Ko)")
+    ax_do.axhline(p["Ko"], color="#c92a2a", ls=":", label="Const. de semisaturație (Ko)")
     ax_do.set_title("Bilanțul Oxigenului Dizolvat", fontsize=9, fontweight="bold")
     ax_do.set_xlabel("Timp (h)", fontsize=7.5)
     ax_do.set_ylabel("DO (mg/L)", fontsize=7.5)
@@ -235,6 +314,74 @@ with col2:
     plt.tight_layout()
     st.pyplot(fig4, use_container_width=True)
     plt.close(fig4)  # Memória felszabadítása
+
+# ----------------------- ANALIZĂ COMBINATĂ: S_0 × kLa × T -----------------------
+st.markdown("---")
+st.subheader("Analiză combinată: substrat × oxigen × temperatură")
+st.caption(
+    "Fiecare hartă variază doi factori simultan; al treilea rămâne la valoarea setată din slidere. "
+    "Culoarea = proteina finală (g/L). ✕ roșu = punctul curent, ★ = maximul din grila hărții. "
+    "Proteina crește cu S_0 atâta timp cât substratul se consumă în timpul disponibil, deci optimul "
+    "real se găsește de obicei în combinația kLa și T."
+)
+
+GRID_N = 12
+RANGES = {
+    "T": np.linspace(15.0, 40.0, GRID_N),
+    "kLa": np.linspace(10.0, 400.0, GRID_N),
+    "S0": np.linspace(5.0, 50.0, GRID_N),
+}
+LABELS = {
+    "T": "Temperatură (°C)",
+    "kLa": "kLa (1/h)",
+    "S0": "Substrat inițial S_0 (g/L)",
+}
+# parametrii care nu sunt baleiați (influențează toate hărțile)
+base_key = tuple(sorted((k, v) for k, v in p.items() if k not in ("T", "kLa", "S0")))
+
+
+def contour_map(xname, yname):
+    xs, ys = RANGES[xname], RANGES[yname]
+    cur = {"T": p["T"], "kLa": p["kLa"], "S0": p["S0"]}
+    Z = np.zeros((len(ys), len(xs)))
+    for i, yv in enumerate(ys):
+        for j, xv in enumerate(xs):
+            v = dict(cur)
+            v[xname], v[yname] = xv, yv
+            Z[i, j] = cached_protein(base_key, v["T"], v["kLa"], v["S0"])
+
+    zmin, zmax = float(Z.min()), float(Z.max())
+    if zmax - zmin < 1e-6:
+        zmax = zmin + 1e-3
+    levels = np.linspace(zmin, zmax, 14)
+
+    fig, ax = plt.subplots(figsize=(5, 3.4))
+    cf = ax.contourf(xs, ys, Z, levels=levels, cmap="YlGn")
+    ax.contour(xs, ys, Z, levels=levels, colors="k", linewidths=0.3, alpha=0.4)
+    cb = fig.colorbar(cf, ax=ax)
+    cb.ax.tick_params(labelsize=6.5)
+    cb.set_label("Proteină (g/L)", fontsize=7)
+
+    i, j = np.unravel_index(np.argmax(Z), Z.shape)
+    ax.plot(xs[j], ys[i], marker="*", color="gold", markeredgecolor="k", markersize=13, ls="")
+    ax.plot(p[xname], p[yname], marker="x", color="#c92a2a", markersize=9, mew=2.2, ls="")
+    ax.set_title(f"{xname} × {yname}", fontsize=9, fontweight="bold")
+    ax.set_xlabel(LABELS[xname], fontsize=7.5)
+    ax.set_ylabel(LABELS[yname], fontsize=7.5)
+    ax.tick_params(labelsize=7)
+    plt.tight_layout()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)  # Memória felszabadítása
+
+
+with st.spinner("Se calculează hărțile (prima dată durează câteva secunde)..."):
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        contour_map("S0", "kLa")
+    with m2:
+        contour_map("T", "kLa")
+    with m3:
+        contour_map("T", "S0")
 
 # EXPORT CSV GOMB STREAMLITBEN
 csv_buffer = io.StringIO()
