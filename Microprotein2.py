@@ -112,13 +112,13 @@ def summary(p, S0):
 st.title("Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
-# BAL OLDALI SÁV (SLIDEREK & INPUTOK)
+# BAL OLDALI SÁV (SLIDEREK)
 st.sidebar.header("Parametrii de Simulare")
 if st.sidebar.button("🔄 Resetare Parametri"):
     st.session_state["T"] = DEFAULTS["T_opt"]
     st.session_state["kLa"] = DEFAULTS["kLa"]
     st.session_state["S0"] = DEFAULTS["S0"]
-    st.session_state["Ks"] = DEFAULTS["Ks"]
+    st.session_state["Ks_mg"] = DEFAULTS["Ks"] * 1000.0  # Reset Ks 5.4 mg/L-re
     st.session_state["mu_max"] = DEFAULTS["mu_max"]
     st.session_state["protein_frac"] = DEFAULTS["protein_frac"]
     st.rerun()
@@ -128,16 +128,16 @@ p["T"] = st.sidebar.slider("Temperatură (°C)", 15.0, 40.0, key="T", value=DEFA
 p["kLa"] = st.sidebar.slider("Aerare kLa (1/h)", 1.0, 50.0, key="kLa", value=DEFAULTS["kLa"])
 p["S0"] = st.sidebar.slider("Substrat inițial S_0 (g/L)", 5.0, 50.0, key="S0", value=DEFAULTS["S0"])
 
-# Ks beviteli mező beszúrása a 111. sor után
-p["Ks"] = st.sidebar.number_input(
-    "Ks - Affinitate substrat (g/L)", 
-    min_value=0.0001, 
-    max_value=1.0000, 
-    value=DEFAULTS["Ks"], 
-    step=0.0010,
-    key="Ks",
-    format="%.4f"
+# CSÚSZKA MG/L-BEN (5.4 mg/L = 0.0054 g/L)
+ks_mg = st.sidebar.slider(
+    "Affinitate substrat K_s (mg/L)", 
+    min_value=0.1, 
+    max_value=100.0, 
+    value=DEFAULTS["Ks"] * 1000.0, 
+    step=0.1,
+    key="Ks_mg"
 )
+p["Ks"] = ks_mg / 1000.0  # Átváltás g/L-be a számításokhoz
 
 p["mu_max"] = st.sidebar.slider("μ_max (1/h)", 0.03, 0.35, key="mu_max", value=DEFAULTS["mu_max"])
 p["protein_frac"] = st.sidebar.slider("Fracție proteică (g/g)", 0.20, 0.70, key="protein_frac", value=DEFAULTS["protein_frac"])
