@@ -109,7 +109,7 @@ def summary(p, S0):
 
 # ----------------------- STREAMLIT UI -----------------------
 
-st.title("Simularea procesului de producție a micoproteinelor prin fermentație cu Fusarium venenatum")
+st.title("Simularea producției de Micoproteină prin fermentație cu Fusarium venenatum")
 st.markdown("**Autor:** Jánosi-Rancz Júlia | **Specializare:** Biotehnologii industriale I.")
 
 # BAL OLDALI SÁV (SLIDEREK)
